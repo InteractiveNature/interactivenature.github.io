@@ -37,8 +37,8 @@ export class ProjectGalleryManager {
                     link: 'services/technical-event-production.html'
                 },
                 {
-                    title: 'Digital Environment Design',
-                    description: 'Virtual production environments, 3D visualizations, and pre-visualization services.',
+                    title: 'Digital Content & Environment Design',
+                    description: 'Virtual production environments, data visualization, digital content production, 3D visualizations, and pre-visualization services.',
                     link: 'services/digital-environment-design.html'
                 },
                 {
