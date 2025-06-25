@@ -92,7 +92,67 @@
                 </div>
             </div>
         </div>
-    </section>
+       </section>
+    <section class="service-gallery">
+  <div class="container">
+    <h2>Project Gallery</h2>
+    <div class="gallery-grid">
+      <!-- Image Example -->
+      <div class="gallery-item">
+        <img src="../assets/projects/SXSW_Install/selected/McLendon-Photography-0510.jpg" alt="SXSWDelta">
+      </div>
+        <div class="gallery-item">
+        <img src="../assets/projects/Fusebox/selected/The Illustrious Blacks.jpg" alt="SXSWDelta">
+      </div>
+      <div class="gallery-item">
+        <img src="../assets/projects/Siesmic/selected/fullframe.jpg" alt="Office">
+      </div>
+            <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/projects/SXSW_Install/selected/checkIn.jpg" alt="Detura">
+      </div>
+            <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/projects/SXSW_Install/selected/deltaBooths.JPG" alt="bradybunch">
+      </div>
+                  <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/projects/SXSW_Install/selected/giftingSalon2.JPG" alt="aimi">
+      </div>
+                        <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/projects/SXSW_Install/selected/Lounge.JPG" alt="aimi2">
+      </div>
+      
+      <!-- Video Example -->
+                             <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/IMG_5954.jpeg" alt="aimi2">
+      </div>
+      <!-- Video Example -->
+      <div class="gallery-item">
+        <video data-video-src="../assets/videos/siesmicReel.mp4" muted loop playsinline>
+          <source src="../assets/videos/siesmicReel.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- END: Service Gallery Section -->
+
+<!-- START: Lightbox Overlay -->
+<div class="lightbox" style="display: none;">
+  <div class="lightbox-content">
+    <button class="close-lightbox">&times;</button>
+    <img src="" alt="Expanded Image" style="display: none;">
+    <video controls autoplay loop muted playsinline style="display: none; max-height: 90vh; border-radius: var(--border-radius);">
+      <source src="" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+</div>
+<!-- END: Lightbox Overlay -->
+
 
     <!-- Our Approach Section -->
     <section class="service-approach">
@@ -360,5 +420,49 @@
 
     <!-- JavaScript Files -->
     <script type="module" src="../js/service.js"></script>
+    <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const lightbox = document.querySelector(".lightbox");
+    const lightboxImg = lightbox.querySelector("img");
+    const lightboxVideo = lightbox.querySelector("video");
+    const lightboxVideoSource = lightboxVideo.querySelector("source");
+    const closeBtn = lightbox.querySelector(".close-lightbox");
+
+    document.querySelectorAll(".gallery-item img").forEach(img => {
+      img.addEventListener("click", () => {
+        lightboxImg.src = img.src;
+        lightboxImg.style.display = "block";
+        lightboxVideo.style.display = "none";
+        lightbox.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      });
+    });
+
+    document.querySelectorAll(".gallery-item video").forEach(video => {
+      const videoSrc = video.getAttribute("data-video-src") || video.querySelector("source")?.src;
+      if (!videoSrc) return;
+
+      video.addEventListener("click", () => {
+        lightboxVideoSource.src = videoSrc;
+        lightboxVideo.load();
+        lightboxImg.style.display = "none";
+        lightboxVideo.style.display = "block";
+        lightbox.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      });
+    });
+
+    function closeLightbox() {
+      lightbox.style.display = "none";
+      lightboxVideo.pause();
+      document.body.style.overflow = "";
+    }
+
+    closeBtn.addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+  });
+</script>
 </body>
 </html>

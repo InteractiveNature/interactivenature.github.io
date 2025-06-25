@@ -443,4 +443,6 @@ function addScrollAnimations() {
     sections.forEach(section => {
         sectionObserver.observe(section);
     });
+    
 }
+

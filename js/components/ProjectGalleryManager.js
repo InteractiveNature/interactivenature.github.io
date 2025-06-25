@@ -43,7 +43,7 @@ export class ProjectGalleryManager {
                 },
                 {
                     title: 'Interactive Installations',
-                    description: 'Custom-designed interactive environments that respond to human presence and movement.',
+                    description: 'Custom-designed interactive environments that respond to human presence, real-time or captured data and movement.',
                     link: 'services/interactive-installations.html'
                 },
                 {

@@ -56,7 +56,7 @@
     <!-- Service Hero Section -->
     <section class="service-hero">
         <div class="container">
-            <h1>Digital Environment Design</h1>
+            <h1>Digital Environment & Content Design</h1>
             <div class="service-intro">
                 <div class="service-intro-text">
                     <p class="service-tagline">Virtual production environments, 3D visualizations, and pre-visualization services that bring digital worlds to life for film, events, and architectural presentations.</p>
@@ -92,7 +92,75 @@
             </div>
         </div>
     </section>
+    <section class="service-gallery">
+  <div class="container">
+    <h2>Project Gallery</h2>
+    <div class="gallery-grid">
+      <!-- Image Example -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/boredApes.jpg" alt="boredApesGame">
+      </div>
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/Estelles_GroundFloor_Bar.png" alt="Office">
+      </div>
+            <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/barbWire_greenFlame.png" alt="Detura">
+      </div>
+            <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/bradybunch.png" alt="bradybunch">
+      </div>
+            <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/lightForest.jpg" alt="hopscotch">
+      </div>
+                  <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/AIMIRender.png" alt="aimi">
+      </div>
+                        <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/airport.png" alt="aimi">
+      </div>
+                        <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/Estelles_Entrance_OutsideDoors.png" alt="aimi">
+      </div>
+                        <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/aimi2.png" alt="aimi2">
+      </div>
+                              <!-- Another Image -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/acheivementHunter.png" alt="aimi2">
+      </div>
+            <div class="gallery-item">
+        <img src="../assets/images/portfolio/Estelles_SecondFloor_Lounge3_2024.02.08.png" alt="aimi2">
+      </div>
+      <!-- Video Example -->
+      <div class="gallery-item">
+        <video data-video-src="../assets/videos/DancingFlowerRender_sm.mp4" muted loop playsinline>
+          <source src="../assets/videos/DancingFlowerRender_sm.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- END: Service Gallery Section -->
 
+<!-- START: Lightbox Overlay -->
+<div class="lightbox" style="display: none;">
+  <div class="lightbox-content">
+    <button class="close-lightbox">&times;</button>
+    <img src="" alt="Expanded Image" style="display: none;">
+    <video controls autoplay loop muted playsinline style="display: none; max-height: 90vh; border-radius: var(--border-radius);">
+      <source src="" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+</div>
+<!-- END: Lightbox Overlay -->
     <!-- Our Approach Section -->
     <section class="service-approach">
         <div class="container">
@@ -231,7 +299,38 @@
             </div>
         </div>
     </section>
+    <section class="service-gallery">
+  <div class="container">
+    <h2>Project Gallery</h2>
+    <div class="gallery-grid">
 
+      <!-- Image 1 -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/fimfoDoor.jpg" alt="Technical Drafting">
+      </div>
+
+      <!-- Image 2 -->
+      <div class="gallery-item">
+        <img src="../assets/images/portfolio/fullframe2.jpg" alt="Audio Reactive Setup">
+      </div>
+
+      <!-- Video 1 -->
+      <div class="gallery-item">
+        <video data-video-src="../assets/videos/waterRipple.mp4" muted loop playsinline>
+          <source src="../assets/videos/waterRipple.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Video 2 -->
+      <div class="gallery-item">
+        <video data-video-src="../assets/videos/OMT_Extended Trailer.mp4" muted loop playsinline>
+          <source src="../assets/videos/OMT_Extended Trailer.mp4" type="video/mp4">
+        </video>
+      </div>
+
+    </div>
+  </div>
+</section>
     <!-- Benefits Section -->
     <section class="service-benefits">
         <div class="container">
@@ -353,5 +452,49 @@
 
     <!-- JavaScript Files -->
     <script type="module" src="../js/service.js"></script>
+    <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const lightbox = document.querySelector(".lightbox");
+    const lightboxImg = lightbox.querySelector("img");
+    const lightboxVideo = lightbox.querySelector("video");
+    const lightboxVideoSource = lightboxVideo.querySelector("source");
+    const closeBtn = lightbox.querySelector(".close-lightbox");
+
+    document.querySelectorAll(".gallery-item img").forEach(img => {
+      img.addEventListener("click", () => {
+        lightboxImg.src = img.src;
+        lightboxImg.style.display = "block";
+        lightboxVideo.style.display = "none";
+        lightbox.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      });
+    });
+
+    document.querySelectorAll(".gallery-item video").forEach(video => {
+      const videoSrc = video.getAttribute("data-video-src") || video.querySelector("source")?.src;
+      if (!videoSrc) return;
+
+      video.addEventListener("click", () => {
+        lightboxVideoSource.src = videoSrc;
+        lightboxVideo.load();
+        lightboxImg.style.display = "none";
+        lightboxVideo.style.display = "block";
+        lightbox.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      });
+    });
+
+    function closeLightbox() {
+      lightbox.style.display = "none";
+      lightboxVideo.pause();
+      document.body.style.overflow = "";
+    }
+
+    closeBtn.addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+  });
+</script>
 </body>
 </html>
