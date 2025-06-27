@@ -49,7 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Initialize components
-    //initializeProjectGallery();
+    if (document.querySelector('.project-gallery-grid')) {
+    initializeProjectGallery();
+}
     initializeServices();
     initializeWorkItems();
     initializeClientLogos();
