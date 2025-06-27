@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Initialize components
-    initializeProjectGallery();
+    //initializeProjectGallery();
     initializeServices();
     initializeWorkItems();
     initializeClientLogos();
@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Initialize project gallery section
  */
+/*
 function initializeProjectGallery() {
     const projectGalleryManager = new ProjectGalleryManager({
         selector: '.project-gallery-grid',
@@ -146,7 +147,7 @@ function initializeProjectGallery() {
     // Expose to window for debugging
     window.projectGalleryManager = projectGalleryManager;
 }
-
+*/
 /**
  * Add theme selector to the specified container
  * @param {HTMLElement} container - Container element to add the theme selector to
