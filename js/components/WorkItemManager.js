@@ -172,7 +172,8 @@ export class WorkItemManager {
         const centered = (t - 0.5) * 2; // -1..1
 
         // Dead zone in the center so it doesn't constantly drift
-        const deadZone = 0.12;
+        // (Higher = wider no-scroll band)
+        const deadZone = 0.22;
         if (Math.abs(centered) < deadZone) {
             this.stopScrolling();
             return;
