@@ -254,6 +254,7 @@ export class WorkItemManager {
         };
 
         const resumeAfterTouch = () => {
+            // Keep auto-scroll paused until we confirm the user is done interacting
             this.autoScrollPaused = false;
         };
 
@@ -275,6 +276,10 @@ export class WorkItemManager {
         this.element.addEventListener('touchmove', (e) => {
             if (!isDragging || e.touches.length !== 1) return;
 
+            // Prevent the page itself from horizontally panning / rubber-banding
+            // so the swipe reliably scrolls the work carousel.
+            e.preventDefault();
+
             const x = e.touches[0].pageX;
 
             // Natural 1:1 scroll (avoid the 1.2 multiplier which makes it feel "slippery")
@@ -290,7 +295,7 @@ export class WorkItemManager {
             lastTimestamp = now;
 
             this.element.scrollLeft = startScrollLeft + distance;
-        }, { passive: true });
+        }, { passive: false });
 
         // Touch end: snap to nearest item center
         this.element.addEventListener('touchend', () => {

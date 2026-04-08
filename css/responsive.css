@@ -176,6 +176,9 @@
     overscroll-behavior-x: contain;
     scroll-padding-left: 1rem;
     scroll-padding-right: 1rem;
+
+    /* Ensure horizontal swipe gestures are captured by the carousel */
+    touch-action: pan-y;
 }
     
 /* Restore section header margin on mobile */
