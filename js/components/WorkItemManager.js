@@ -14,13 +14,22 @@ export class WorkItemManager {
     constructor(options = {}) {
         this.options = {
             selector: '.work-grid',
-            edgeScrollEnabled: true, // Enable edge scrolling by default
-            edgeScrollThreshold: 150, // Pixels from edge to trigger scrolling
-            edgeScrollSpeed: 5, // Pixels per frame to scroll
-            hoverInteractionEnabled: true, // Enable hover interactions
-            bounceAnimationEnabled: true, // Enable bounce animation at gallery ends
-            maxMomentumVelocity: 4, // Maximum velocity for momentum scrolling (pixels per frame)
-            momentumScaleFactor: 15, // Scale factor for initial momentum velocity
+
+            // Edge scroll (mouse position controls scroll direction/speed)
+            edgeScrollEnabled: true,
+            edgeScrollThreshold: 150,
+            edgeScrollSpeed: 5,
+
+            // Auto-scroll (continuous left loop)
+            autoScrollEnabled: true,
+            autoScrollSpeed: 0.6, // px per frame (~36px/s @ 60fps)
+            pauseOnHover: true,
+
+            hoverInteractionEnabled: true,
+            bounceAnimationEnabled: true,
+
+            maxMomentumVelocity: 4,
+            momentumScaleFactor: 15,
             ...options
         };
         
@@ -28,15 +37,28 @@ export class WorkItemManager {
         this.workItems = [];
         this.mouseX = 0;
         this.mouseY = 0;
+
+        // Edge scrolling state
         this.isScrolling = false;
         this.scrollDirection = 0; // -1 for left, 1 for right
+
+        // Auto scrolling state
+        this.isAutoScrolling = false;
+        this.autoScrollPaused = false;
+
         this.reachedStart = false;
         this.reachedEnd = false;
         this.initialized = false;
         this.animationFrame = null;
         this.momentumRAF = null; // For momentum scrolling animation
         this.isMobile = false; // Removed mobile check to enable horizontal scrolling on all devices
-        
+
+        // Bound handlers (so removeEventListener works)
+        this._handleMouseMove = this.handleMouseMove.bind(this);
+        this._handleResize = this.handleResize.bind(this);
+        this._handleGridEnter = this.handleGridEnter.bind(this);
+        this._handleGridLeave = this.handleGridLeave.bind(this);
+
         // Create password modal for NDA projects
         this.passwordModal = new PasswordModal();
     }
@@ -55,6 +77,12 @@ export class WorkItemManager {
         this.initialized = true;
         this.setupEventListeners();
         
+        // Prepare seamless looping content for auto-scroll
+        if (this.options.autoScrollEnabled) {
+            this.ensureLoopingItems();
+            this.isAutoScrolling = true;
+        }
+
         // Initialize edge scrolling if enabled (for all devices)
         if (this.options.edgeScrollEnabled) {
             this.initializeEdgeScrolling();
@@ -68,10 +96,19 @@ export class WorkItemManager {
      */
     setupEventListeners() {
         // Track mouse position for hover and edge scrolling effects
-        document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        document.addEventListener('mousemove', this._handleMouseMove, { passive: true });
         
         // Handle window resize
-        window.addEventListener('resize', this.handleResize.bind(this));
+        window.addEventListener('resize', this._handleResize, { passive: true });
+
+        // Pause auto-scroll while the user is interacting with the gallery
+        if (this.element) {
+            this.element.addEventListener('mouseenter', this._handleGridEnter, { passive: true });
+            this.element.addEventListener('mouseleave', this._handleGridLeave, { passive: true });
+            this.element.addEventListener('touchstart', this._handleGridEnter, { passive: true });
+            this.element.addEventListener('touchend', this._handleGridLeave, { passive: true });
+            this.element.addEventListener('touchcancel', this._handleGridLeave, { passive: true });
+        }
         
         // Add intersection observer for scroll animations
         const observerOptions = {
@@ -105,43 +142,47 @@ export class WorkItemManager {
     handleMouseMove(e) {
         this.mouseX = e.clientX;
         this.mouseY = e.clientY;
-        
-        // Check if mouse is over the gallery element
-        if (this.element) {
-            const rect = this.element.getBoundingClientRect();
-            
-            // Expanded detection area - check if mouse is within or near the gallery bounds
-            const expandedTop = rect.top - 50;
-            const expandedBottom = rect.bottom + 50;
-            const expandedLeft = rect.left - 100; // Extend detection area to the left
-            const expandedRight = rect.right + 100; // Extend detection area to the right
-            
-            if (
-                this.mouseX >= expandedLeft &&
-                this.mouseX <= expandedRight &&
-                this.mouseY >= expandedTop &&
-                this.mouseY <= expandedBottom
-            ) {
-                // Check if mouse is near the left or right edge with expanded detection
-                if (this.options.edgeScrollEnabled) {
-                    // Left edge - expanded detection area
-                    if (this.mouseX < rect.left + this.options.edgeScrollThreshold) {
-                        this.startScrolling(-1); // Scroll left
-                    }
-                    // Right edge - expanded detection area
-                    else if (this.mouseX > rect.right - this.options.edgeScrollThreshold) {
-                        this.startScrolling(1); // Scroll right
-                    }
-                    // Not near edges
-                    else {
-                        this.stopScrolling();
-                    }
-                }
-            } else {
-                // Mouse is outside expanded gallery area
-                this.stopScrolling();
-            }
+
+        if (!this.element) return;
+
+        const rect = this.element.getBoundingClientRect();
+
+        // Expanded detection area - check if mouse is within or near the gallery bounds
+        const expandedTop = rect.top - 50;
+        const expandedBottom = rect.bottom + 50;
+        const expandedLeft = rect.left - 100;
+        const expandedRight = rect.right + 100;
+
+        const isInGalleryArea =
+            this.mouseX >= expandedLeft &&
+            this.mouseX <= expandedRight &&
+            this.mouseY >= expandedTop &&
+            this.mouseY <= expandedBottom;
+
+        if (!isInGalleryArea) {
+            this.stopScrolling();
+            return;
         }
+
+        // Cursor-position-based scroll direction (smoothly)
+        if (!this.options.edgeScrollEnabled) return;
+
+        // Convert cursor X into a normalized value in [-1, 1], where 0 is center.
+        const t = (this.mouseX - rect.left) / rect.width; // 0..1
+        const centered = (t - 0.5) * 2; // -1..1
+
+        // Dead zone in the center so it doesn't constantly drift
+        const deadZone = 0.12;
+        if (Math.abs(centered) < deadZone) {
+            this.stopScrolling();
+            return;
+        }
+
+        // Direction is sign; magnitude controls speed via updateScroll
+        this.startScrolling(Math.sign(centered));
+
+        // Scale scroll speed based on distance from center (0..1)
+        this._edgeIntensity = Math.min(1, (Math.abs(centered) - deadZone) / (1 - deadZone));
     }
     
     /**
@@ -337,38 +378,36 @@ export class WorkItemManager {
      * Update scroll position based on current scroll direction
      */
     updateScroll() {
-        if (this.isScrolling && this.element) {
-            // Calculate new scroll position with increased speed
-            const scrollSpeed = this.options.edgeScrollSpeed * 2; // Double the scroll speed
-            const newScrollLeft = this.element.scrollLeft + (this.scrollDirection * scrollSpeed);
-            
-            // Check if we've reached the start or end of the gallery
-            const maxScrollLeft = this.element.scrollWidth - this.element.clientWidth;
-            
-            // Check if we're at the start
-            if (newScrollLeft <= 0 && this.scrollDirection < 0) {
-                if (!this.reachedStart && this.options.bounceAnimationEnabled) {
-                    this.triggerBounceAnimation('left');
-                }
-                this.element.scrollLeft = 0;
-                this.reachedStart = true;
-            } 
-            // Check if we're at the end
-            else if (newScrollLeft >= maxScrollLeft && this.scrollDirection > 0) {
-                if (!this.reachedEnd && this.options.bounceAnimationEnabled) {
-                    this.triggerBounceAnimation('right');
-                }
-                this.element.scrollLeft = maxScrollLeft;
-                this.reachedEnd = true;
-            } 
-            // Normal scrolling
-            else {
-                this.element.scrollLeft = newScrollLeft;
-                this.reachedStart = false;
-                this.reachedEnd = false;
+        if (!this.element) {
+            this.animationFrame = requestAnimationFrame(this.updateScroll.bind(this));
+            return;
+        }
+
+        // Loop point (we clone items once, so midpoint is a safe wrap)
+        const maxScrollLeft = this.element.scrollWidth - this.element.clientWidth;
+        const loopPoint = Math.max(0, maxScrollLeft / 2);
+
+        // 1) Continuous auto-scroll (to the left)
+        if (this.options.autoScrollEnabled && this.isAutoScrolling && !this.autoScrollPaused) {
+            this.element.scrollLeft += this.options.autoScrollSpeed;
+        }
+
+        // 2) Cursor-position-driven scroll overrides (when active)
+        if (this.isScrolling) {
+            const intensity = this._edgeIntensity ?? 1;
+            const scrollSpeed = this.options.edgeScrollSpeed * 2 * intensity;
+            this.element.scrollLeft += this.scrollDirection * scrollSpeed;
+        }
+
+        // 3) Wrap-around for seamless looping
+        if (loopPoint > 0) {
+            if (this.element.scrollLeft >= loopPoint) {
+                this.element.scrollLeft -= loopPoint;
+            } else if (this.element.scrollLeft < 0) {
+                this.element.scrollLeft += loopPoint;
             }
         }
-        
+
         // Continue animation loop
         this.animationFrame = requestAnimationFrame(this.updateScroll.bind(this));
     }
@@ -407,81 +446,81 @@ export class WorkItemManager {
         }
     }
     
-/**
- * Add a new work item with a link to its project page
- * @param {Object} workConfig - Work item configuration
- * @returns {HTMLElement} - The created work item element
- */
-addWorkItem(workConfig) {
-    if (!this.element) return null;
+    /**
+     * Add a new work item with a link to its project page
+     * @param {Object} workConfig - Work item configuration
+     * @returns {HTMLElement} - The created work item element
+     */
+    addWorkItem(workConfig) {
+        if (!this.element) return null;
     
-    const { title, description, imageSrc, imageAlt, projectUrl, isNDA } = workConfig;
+        const { title, description, imageSrc, imageAlt, projectUrl, isNDA } = workConfig;
     
-    // Generate a unique ID for the project based on title
-    const projectId = title.toLowerCase().replace(/\s+/g, '-');
+        // Generate a unique ID for the project based on title
+        const projectId = title.toLowerCase().replace(/\s+/g, '-');
     
-    // Default project URL if not provided
-    const url = projectUrl || `projects/${projectId}.html`;
+        // Default project URL if not provided
+        const url = projectUrl || `projects/${projectId}.html`;
     
-    // Create work item HTML with link to project page
-    const itemHTML = `
-        <a href="${url}" class="work-item-link" data-project-id="${projectId}" ${isNDA ? 'data-nda="true"' : ''}>
-            <div class="work-item ${isNDA ? 'nda-project' : ''}">
-                <img src="${imageSrc}" alt="${imageAlt || title}">
-                <div class="work-overlay">
-                    <h3>${title}</h3>
-                    <p>${description}</p>
-                    <span class="view-project">${isNDA ? 'Protected Project' : 'View Project'}</span>
+        // Create work item HTML with link to project page
+        const itemHTML = `
+            <a href="${url}" class="work-item-link" data-project-id="${projectId}" ${isNDA ? 'data-nda="true"' : ''}>
+                <div class="work-item ${isNDA ? 'nda-project' : ''}">
+                    <img src="${imageSrc}" alt="${imageAlt || title}">
+                    <div class="work-overlay">
+                        <h3>${title}</h3>
+                        <p>${description}</p>
+                        <span class="view-project">${isNDA ? 'Protected Project' : 'View Project'}</span>
+                    </div>
                 </div>
-            </div>
-        </a>
-    `;
+            </a>
+        `;
     
-    // Add item to the grid
-    this.element.insertAdjacentHTML('beforeend', itemHTML);
+        // Add item to the grid
+        this.element.insertAdjacentHTML('beforeend', itemHTML);
     
-    // Get the added item element
-    const itemElement = this.element.lastElementChild;
+        // Get the added item element
+        const itemElement = this.element.lastElementChild;
     
-    // Add click handler for NDA projects
-    if (isNDA) {
-        itemElement.addEventListener('click', (e) => {
-            // Prevent default navigation
-            e.preventDefault();
-            
-            // Check if already authenticated
-            if (isAuthenticated(projectId)) {
-                // Allow navigation if authenticated
-                window.location.href = url;
-            } else {
-                // Show password modal with onAuthenticated callback
-                this.passwordModal = new PasswordModal({
-                    onAuthenticated: (authenticatedProjectId) => {
-                        // Also authenticate with the URL-based project ID to ensure compatibility
-                        const urlProjectId = url.substring(url.lastIndexOf('/') + 1).replace('.html', '');
-                        if (authenticatedProjectId !== urlProjectId) {
-                            sessionStorage.setItem(`auth_${urlProjectId}`, 'true');
+        // Add click handler for NDA projects
+        if (isNDA) {
+            itemElement.addEventListener('click', (e) => {
+                // Prevent default navigation
+                e.preventDefault();
+                
+                // Check if already authenticated
+                if (isAuthenticated(projectId)) {
+                    // Allow navigation if authenticated
+                    window.location.href = url;
+                } else {
+                    // Show password modal with onAuthenticated callback
+                    this.passwordModal = new PasswordModal({
+                        onAuthenticated: (authenticatedProjectId) => {
+                            // Also authenticate with the URL-based project ID to ensure compatibility
+                            const urlProjectId = url.substring(url.lastIndexOf('/') + 1).replace('.html', '');
+                            if (authenticatedProjectId !== urlProjectId) {
+                                sessionStorage.setItem(`auth_${urlProjectId}`, 'true');
+                            }
+                            
+                            // Navigate to the project after authentication
+                            window.location.href = url;
                         }
-                        
-                        // Navigate to the project after authentication
-                        window.location.href = url;
-                    }
-                });
-                this.passwordModal.show(projectId, url);
-            }
+                    });
+                    this.passwordModal.show(projectId, url);
+                }
+            });
+        }
+    
+        // Add to work items array
+        this.workItems.push({
+            config: workConfig,
+            element: itemElement,
+            projectId: projectId,
+            isNDA: !!isNDA
         });
+        
+        return itemElement;
     }
-    
-    // Add to work items array
-    this.workItems.push({
-        config: workConfig,
-        element: itemElement,
-        projectId: projectId,
-        isNDA: !!isNDA
-    });
-    
-    return itemElement;
-}
     
     /**
      * Remove a work item
@@ -550,9 +589,15 @@ addWorkItem(workConfig) {
         }
         
         // Remove event listeners
-        if (this.options.mouseInteractionEnabled) {
-            document.removeEventListener('mousemove', this.handleMouseMove.bind(this));
-            window.removeEventListener('resize', this.handleResize.bind(this));
+        document.removeEventListener('mousemove', this._handleMouseMove);
+        window.removeEventListener('resize', this._handleResize);
+
+        if (this.element) {
+            this.element.removeEventListener('mouseenter', this._handleGridEnter);
+            this.element.removeEventListener('mouseleave', this._handleGridLeave);
+            this.element.removeEventListener('touchstart', this._handleGridEnter);
+            this.element.removeEventListener('touchend', this._handleGridLeave);
+            this.element.removeEventListener('touchcancel', this._handleGridLeave);
         }
         
         // Destroy password modal
@@ -561,5 +606,41 @@ addWorkItem(workConfig) {
         }
         
         this.initialized = false;
+    }
+    
+    handleGridEnter() {
+        if (this.options.pauseOnHover) {
+            this.autoScrollPaused = true;
+        }
+    }
+
+    handleGridLeave() {
+        if (this.options.pauseOnHover) {
+            this.autoScrollPaused = false;
+        }
+    }
+
+    /**
+     * Duplicate items to allow seamless looping.
+     * Keeps the original set in-place and appends one clone set.
+     */
+    ensureLoopingItems() {
+        if (!this.element) return;
+        if (this.element.dataset.loopingInitialized === 'true') return;
+
+        // If there are no items, nothing to clone
+        const children = Array.from(this.element.children);
+        if (children.length === 0) return;
+
+        // Clone all current children once
+        const clones = children.map((el) => el.cloneNode(true));
+        clones.forEach((clone) => {
+            // Prevent duplicate NDA click handlers by removing any dataset flags.
+            // (NDA click handling is attached on the original item element in addWorkItem.)
+            clone.removeAttribute('data-nda');
+            this.element.appendChild(clone);
+        });
+
+        this.element.dataset.loopingInitialized = 'true';
     }
 }

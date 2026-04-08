@@ -12,7 +12,7 @@ export class Cursor {
             cursorSelector: '.cursor',
             growClass: 'grow',
             interactiveElements: 'a, button, input, textarea, select, .service-card, .work-item',
-            easeFactor: 0.2,
+            easeFactor: 1,
             size: 16,
             growSize: 3,
             enabled: true,
@@ -26,6 +26,8 @@ export class Cursor {
         this.cursorY = 0;
         this.isGrowing = false;
         this.animationFrame = null;
+
+        this._handleMouseMove = this.handleMouseMove.bind(this);
     }
     
     /**
@@ -34,6 +36,14 @@ export class Cursor {
      */
     init() {
         if (!this.options.enabled) return this;
+
+        // Disable custom cursor on touch devices (mobile/tablet)
+        if (window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+            if (document.documentElement) {
+                document.documentElement.classList.add('no-custom-cursor');
+            }
+            return this;
+        }
         
         this.cursor = document.querySelector(this.options.cursorSelector);
         if (!this.cursor) {
@@ -44,6 +54,10 @@ export class Cursor {
         // Set initial cursor size
         this.cursor.style.width = `${this.options.size}px`;
         this.cursor.style.height = `${this.options.size}px`;
+
+        // Ensure cursor starts at current pointer location (no initial "lag")
+        this.cursorX = this.mouseX;
+        this.cursorY = this.mouseY;
         
         this.setupEventListeners();
         this.animateCursor();
@@ -56,7 +70,7 @@ export class Cursor {
      */
     setupEventListeners() {
         // Track mouse position
-        document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        document.addEventListener('mousemove', this._handleMouseMove, { passive: true });
         
         // Handle interactive elements
         const interactiveElements = document.querySelectorAll(this.options.interactiveElements);
@@ -140,7 +154,7 @@ export class Cursor {
      * Animate the cursor
      */
     animateCursor() {
-        // Calculate smooth movement with easing
+        // Move cursor (easeFactor=1 means no delay)
         const { easeFactor } = this.options;
         this.cursorX += (this.mouseX - this.cursorX) * easeFactor;
         this.cursorY += (this.mouseY - this.cursorY) * easeFactor;
@@ -162,7 +176,7 @@ export class Cursor {
         }
         
         // Remove any event listeners if needed
-        document.removeEventListener('mousemove', this.handleMouseMove.bind(this));
+        document.removeEventListener('mousemove', this._handleMouseMove);
         
         // Reset cursor
         if (this.cursor) {

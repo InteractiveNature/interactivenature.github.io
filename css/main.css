@@ -90,6 +90,26 @@
     cursor: none;
 }
 
+/* Disable custom cursor on touch devices */
+@media (hover: none), (pointer: coarse) {
+    * {
+        cursor: auto;
+    }
+
+    .cursor {
+        display: none !important;
+    }
+}
+
+/* Allow JS to force-disable the custom cursor */
+.no-custom-cursor * {
+    cursor: auto;
+}
+
+.no-custom-cursor .cursor {
+    display: none !important;
+}
+
 body {
     font-family: 'FunnelDisplay-Regular', Arial, sans-serif;
     background-color: var(--primary);
