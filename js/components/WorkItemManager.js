@@ -470,7 +470,7 @@ export class WorkItemManager {
                     <div class="work-overlay">
                         <h3>${title}</h3>
                         <p>${description}</p>
-                        <span class="view-project">${isNDA ? 'Protected Project' : 'View Project'}</span>
+                        <span class="view-project">${isNDA ? '🔒 Password Required' : 'View Project'}</span>
                     </div>
                 </div>
             </a>
