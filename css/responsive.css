@@ -169,7 +169,13 @@
     padding-left: 1rem; /* Add padding to offset the negative margin */
     margin-top: -1rem; /* Move gallery up to overlap with title */
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    scroll-snap-type: x proximity; /* Changed from mandatory to proximity for smoother scrolling */
+
+    /* Make each swipe "land" on an item */
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+    scroll-padding-left: 1rem;
+    scroll-padding-right: 1rem;
 }
     
 /* Restore section header margin on mobile */
@@ -184,7 +190,10 @@
     transform: none; /* Reset transform */
     padding: 0 15px; /* Slightly increased padding */
     transition: all 0.4s ease; /* Faster transition for mobile */
-    scroll-snap-align: center; /* Enable snap points */
+
+    /* Snap behavior */
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
 }
     
 .work-item {
@@ -269,6 +278,10 @@
         font-size: var(--font-size-xl);
         text-decoration: none;
         color: var(--text);
+    }
+    
+    .mobile-nav-dropdown {
+        display: block;
     }
 }
 

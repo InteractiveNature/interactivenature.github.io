@@ -34,22 +34,26 @@ export class ProjectGalleryManager {
                 {
                     title: 'Technical Event Production',
                     description: 'Comprehensive technical drafting and production services for events of any scale.',
-                    link: 'services/technical-event-production.html'
+                    link: 'services/technical-event-production.html',
+                    media: { type: 'image', src: 'assets/images/portfolio/Fusebash2025.jpg', alt: 'Technical Event Production' }
                 },
                 {
                     title: 'Digital Content & Environment Design',
                     description: 'Virtual production environments, data visualization, digital content production, 3D visualizations, and pre-visualization services.',
-                    link: 'services/digital-environment-design.html'
+                    link: 'services/digital-environment-design.html',
+                    media: { type: 'image', src: 'assets/images/portfolio/giftingSolon.png', alt: 'Digital Content & Environment Design' }
                 },
                 {
                     title: 'Interactive Installations',
                     description: 'Custom-designed interactive environments that respond to human presence, real-time or captured data and movement.',
-                    link: 'services/interactive-installations.html'
+                    link: 'services/interactive-installations.html',
+                    media: { type: 'image', src: 'assets/images/portfolio/zoltar.jpg', alt: 'Interactive Installations' }
                 },
                 {
                     title: 'Projection Mapping & Art',
                     description: 'Transform any surface into a canvas for dynamic visual storytelling.',
-                    link: 'services/projection-mapping-art.html'
+                    link: 'services/projection-mapping-art.html',
+                    media: { type: 'image', src: 'assets/images/portfolio/LittleMermaid.jpg', alt: 'Projection Mapping & Art' }
                 }
             ],
             // Define which gallery items will be replaced with service blocks
@@ -241,16 +245,41 @@ export class ProjectGalleryManager {
             const serviceBlock = document.createElement('a');
             serviceBlock.className = 'service-block';
             serviceBlock.href = service.link;
-            
+
             const title = document.createElement('h3');
             title.textContent = service.title;
-            
+
             const description = document.createElement('p');
             description.textContent = service.description;
-            
+
             serviceBlock.appendChild(title);
             serviceBlock.appendChild(description);
-            
+
+            // Add optional media (used for mobile stacked layout)
+            if (service.media && service.media.src) {
+                const mediaWrap = document.createElement('div');
+                mediaWrap.className = 'service-block-media';
+
+                if (service.media.type === 'video') {
+                    const video = document.createElement('video');
+                    video.src = service.media.src;
+                    video.autoplay = true;
+                    video.loop = true;
+                    video.muted = true;
+                    video.playsInline = true;
+                    if (service.media.poster) video.poster = service.media.poster;
+                    mediaWrap.appendChild(video);
+                } else {
+                    const img = document.createElement('img');
+                    img.src = service.media.src;
+                    img.alt = service.media.alt || service.title;
+                    img.loading = 'lazy';
+                    mediaWrap.appendChild(img);
+                }
+
+                serviceBlock.appendChild(mediaWrap);
+            }
+
             // Add to the active container
             item.containers[item.activeContainerIndex].appendChild(serviceBlock);
             

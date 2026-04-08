@@ -21,7 +21,7 @@ import {
 import { PasswordModal } from './components/PasswordModal.js';
 
 // Initialize when DOM content is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Load NDA protection styles
     loadNdaProtectionStyles();
     // Create theme manager and theme selector
@@ -59,6 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add scroll animations
     addScrollAnimations();
+
+    // Inject shared header (if placeholder exists)
+    await loadSharedHeader();
+
+    // Wire up mobile navigation dropdown (header may be injected)
+    setupMobileNavDropdown();
 });
 
 /**
@@ -447,5 +453,87 @@ function addScrollAnimations() {
         sectionObserver.observe(section);
     });
     
+}
+
+async function loadSharedHeader() {
+    const host = document.getElementById('site-header');
+    if (!host) return;
+
+    const current = window.location.pathname;
+    const isNested = current.includes('/projects/') || current.includes('/services/');
+
+    const prefix = isNested ? '../' : '';
+    const partialUrl = `${prefix}partials/header.html`;
+
+    try {
+        const res = await fetch(partialUrl, { cache: 'no-cache' });
+        if (!res.ok) return;
+
+        let html = await res.text();
+
+        // Fix relative links for nested pages by prefixing index/work/assets paths
+        if (isNested) {
+            html = html
+                .replaceAll('href="index.html', 'href="../index.html')
+                .replaceAll('href="work.html"', 'href="../work.html"')
+                .replaceAll('src="assets/', 'src="../assets/');
+        }
+
+        host.innerHTML = html;
+    } catch {
+        // If header fails to load, leave placeholder empty (page still usable)
+    }
+}
+
+function setupMobileNavDropdown() {
+    const select = document.getElementById('mobile-nav-select');
+    if (!select) return;
+
+    // Keep dropdown in sync when browsing the home page anchors
+    const sync = () => {
+        // Work page
+        if (location.pathname.endsWith('/work.html') || location.pathname.endsWith('work.html')) {
+            select.value = select.querySelector('option[value$="work.html"]')?.value || '';
+            return;
+        }
+
+        // Home page anchors
+        const hash = location.hash;
+        if (!hash) {
+            select.value = '';
+            return;
+        }
+
+        const opt = Array.from(select.options).find(o => {
+            try {
+                const u = new URL(o.value, location.href);
+                return u.hash === hash;
+            } catch {
+                return false;
+            }
+        });
+
+        select.value = opt?.value || '';
+    };
+
+    window.addEventListener('hashchange', sync, { passive: true });
+    sync();
+
+    select.addEventListener('change', () => {
+        const value = select.value;
+        if (!value) return;
+
+        const url = new URL(value, window.location.href);
+        const isSamePage = url.pathname === window.location.pathname;
+
+        if (isSamePage && url.hash) {
+            const el = document.querySelector(url.hash);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            history.replaceState(null, '', url.hash);
+            return;
+        }
+
+        window.location.href = value;
+    });
 }
 

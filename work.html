@@ -46,6 +46,19 @@
                 <img src="assets/images/InteractiveNatureLogo.png" alt="Interactive Nature Logo" />
             </a>
         </div>
+
+        <!-- Mobile dropdown navigation -->
+        <div class="mobile-nav-dropdown" aria-label="Mobile navigation">
+            <label class="sr-only" for="mobile-nav-select">Navigation</label>
+            <select id="mobile-nav-select" class="mobile-nav-select">
+                <option value="">Navigate…</option>
+                <option value="index.html#combined-gallery-services">Services</option>
+                <option value="work.html">Work</option>
+                <option value="index.html#about">About</option>
+                <option value="index.html#contact">Contact</option>
+            </select>
+        </div>
+
         <nav>
             <ul>
                 <li><a href="index.html#combined-gallery-services">Services</a></li>
@@ -83,5 +96,30 @@
 
     <!-- JavaScript -->
     <script type="module" src="js/work-page.js"></script>
+    <script>
+        (function () {
+            const select = document.getElementById('mobile-nav-select');
+            if (!select) return;
+
+            const syncFromLocation = () => {
+                // If we are on work.html, keep dropdown showing Work.
+                // Otherwise, if there is a hash, reflect it.
+                if (location.pathname.endsWith('/work.html') || location.pathname.endsWith('work.html')) {
+                    select.value = 'work.html';
+                } else if (location.hash) {
+                    select.value = location.pathname.split('/').pop() + location.hash;
+                }
+            };
+
+            window.addEventListener('hashchange', syncFromLocation, { passive: true });
+            syncFromLocation();
+
+            select.addEventListener('change', () => {
+                const value = select.value;
+                if (!value) return;
+                window.location.href = value;
+            });
+        })();
+    </script>
 </body>
 </html>

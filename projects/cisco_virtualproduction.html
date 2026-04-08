@@ -46,14 +46,26 @@
               <img src="../assets/images/InteractiveNatureLogo.png" alt="Interactive Nature Logo">
             </a>
           </div>
+
         <nav>
             <ul>
                 <li><a href="../index.html#services">Services</a></li>
-                <li><a href="../index.html#work">Work</a></li>
+                <li><a href="../work.html">Work</a></li>
                 <li><a href="../index.html#about">About</a></li>
                 <li><a href="../index.html#contact">Contact</a></li>
             </ul>
         </nav>
+
+        <div class="mobile-nav-dropdown">
+            <label for="mobile-nav-select" class="sr-only">Menu</label>
+            <select id="mobile-nav-select" class="mobile-nav-select" aria-label="Mobile navigation">
+                <option value="">Menu</option>
+                <option value="../index.html#services">Services</option>
+                <option value="../work.html">Work</option>
+                <option value="../index.html#about">About</option>
+                <option value="../index.html#contact">Contact</option>
+            </select>
+        </div>
     </header>
 
     <!-- Hero Section with Project Title -->
@@ -160,5 +172,45 @@
     <!-- JavaScript Files -->
     <script type="module" src="../js/main.js"></script>
     <script type="module" src="../js/project.js"></script>
+
+    <script>
+      (function () {
+        const select = document.getElementById('mobile-nav-select');
+        if (!select) return;
+
+        const setCurrent = () => {
+          const path = window.location.pathname;
+          if (path.endsWith('/work.html') || path.endsWith('work.html')) {
+            select.value = '../work.html';
+            return;
+          }
+          const hash = window.location.hash;
+          if (hash === '#services') select.value = '../index.html#services';
+          else if (hash === '#about') select.value = '../index.html#about';
+          else if (hash === '#contact') select.value = '../index.html#contact';
+          else select.value = '';
+        };
+
+        setCurrent();
+        window.addEventListener('hashchange', setCurrent);
+
+        select.addEventListener('change', () => {
+          const value = select.value;
+          if (!value) return;
+
+          const url = new URL(value, window.location.href);
+          const isSamePage = url.pathname === window.location.pathname;
+
+          if (isSamePage && url.hash) {
+            const el = document.querySelector(url.hash);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+
+          window.location.href = value;
+        });
+      })();
+    </script>
+
 </body>
 </html>

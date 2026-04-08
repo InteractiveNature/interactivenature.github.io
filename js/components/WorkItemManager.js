@@ -233,62 +233,83 @@ export class WorkItemManager {
      */
     initializeTouchScrolling() {
         if (!this.element) return;
-        
-        let startX, startScrollLeft, isDragging = false;
-        let lastX, lastTimestamp, velocity = 0;
-        
-        // Touch start event
+
+        let startX = 0;
+        let startScrollLeft = 0;
+        let isDragging = false;
+
+        let lastX = 0;
+        let lastTimestamp = 0;
+        let velocity = 0;
+
+        // If the carousel is looping / auto-scrolling, snapping feels bad.
+        // We'll temporarily disable auto-scroll + edge scroll during direct touch interaction.
+        const pauseDuringTouch = () => {
+            this.autoScrollPaused = true;
+            this.stopScrolling();
+            if (this.momentumRAF) {
+                cancelAnimationFrame(this.momentumRAF);
+                this.momentumRAF = null;
+            }
+        };
+
+        const resumeAfterTouch = () => {
+            this.autoScrollPaused = false;
+        };
+
+        // Touch start
         this.element.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+
+            pauseDuringTouch();
+
             startX = e.touches[0].pageX;
             lastX = startX;
             lastTimestamp = Date.now();
             startScrollLeft = this.element.scrollLeft;
             isDragging = true;
             velocity = 0;
-            
-            // Stop any ongoing momentum scrolling
-            if (this.momentumRAF) {
-                cancelAnimationFrame(this.momentumRAF);
-                this.momentumRAF = null;
-            }
         }, { passive: true });
-        
-        // Touch move event
+
+        // Touch move
         this.element.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            
-            // Calculate distance moved with improved sensitivity
+            if (!isDragging || e.touches.length !== 1) return;
+
             const x = e.touches[0].pageX;
-            const distance = (startX - x) * 1.2; // Multiply by 1.2 for more responsive movement
-            
-            // Calculate velocity for momentum scrolling
+
+            // Natural 1:1 scroll (avoid the 1.2 multiplier which makes it feel "slippery")
+            const distance = (startX - x);
+
             const now = Date.now();
             const elapsed = now - lastTimestamp;
             if (elapsed > 0) {
-                velocity = (lastX - x) / elapsed; // pixels per millisecond
+                velocity = (lastX - x) / elapsed; // px/ms
             }
+
             lastX = x;
             lastTimestamp = now;
-            
-            // Scroll the container with smooth behavior
+
             this.element.scrollLeft = startScrollLeft + distance;
         }, { passive: true });
-        
-        // Touch end event with momentum scrolling
+
+        // Touch end: snap to nearest item center
         this.element.addEventListener('touchend', () => {
             if (!isDragging) return;
-            
             isDragging = false;
-            
-            // Apply momentum scrolling if velocity is significant
-            if (Math.abs(velocity) > 0.1) {
-                this.applyMomentumScrolling(velocity);
+
+            // If looping is enabled, don't try to snap (it will fight the wrap logic)
+            if (this.options.autoScrollEnabled) {
+                resumeAfterTouch();
+                return;
             }
+
+            this.snapToNearestItem();
+            resumeAfterTouch();
         }, { passive: true });
-        
-        // Touch cancel event
+
         this.element.addEventListener('touchcancel', () => {
             isDragging = false;
+            resumeAfterTouch();
             if (this.momentumRAF) {
                 cancelAnimationFrame(this.momentumRAF);
                 this.momentumRAF = null;
@@ -642,5 +663,33 @@ export class WorkItemManager {
         });
 
         this.element.dataset.loopingInitialized = 'true';
+    }
+
+    snapToNearestItem() {
+        if (!this.element) return;
+
+        const items = Array.from(this.element.querySelectorAll('.work-item-link'));
+        if (items.length === 0) return;
+
+        const gridRect = this.element.getBoundingClientRect();
+        const targetCenter = gridRect.left + gridRect.width / 2;
+
+        let best = null;
+        let bestDistance = Infinity;
+
+        for (const item of items) {
+            const r = item.getBoundingClientRect();
+            const itemCenter = r.left + r.width / 2;
+            const d = Math.abs(itemCenter - targetCenter);
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = item;
+            }
+        }
+
+        if (best) {
+            // Smoothly center the item
+            best.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
     }
 }
