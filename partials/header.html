@@ -5,19 +5,21 @@
     </a>
   </div>
 
-  <!-- Mobile dropdown navigation (shown via CSS only on mobile) -->
-  <div class="mobile-nav-dropdown" aria-label="Mobile navigation">
-    <label class="sr-only" for="mobile-nav-select">Navigation</label>
-    <select id="mobile-nav-select" class="mobile-nav-select">
-      <option value="">Menu</option>
-      <option value="index.html#combined-gallery-services">Services</option>
-      <option value="work.html">Work</option>
-      <option value="index.html#about">About</option>
-      <option value="index.html#contact">Contact</option>
-    </select>
+  <!-- Mobile hamburger menu (shown via CSS only on mobile) -->
+  <button class="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+    <span class="mobile-nav-toggle__bars" aria-hidden="true"></span>
+  </button>
+
+  <div id="mobile-nav-panel" class="mobile-nav-panel" hidden>
+    <nav class="mobile-nav-panel__nav" aria-label="Mobile navigation">
+      <a class="mobile-nav-link" href="index.html#combined-gallery-services">Services</a>
+      <a class="mobile-nav-link" href="work.html">Work</a>
+      <a class="mobile-nav-link" href="index.html#about">About</a>
+      <a class="mobile-nav-link" href="index.html#contact">Contact</a>
+    </nav>
   </div>
 
-  <nav>
+  <nav class="desktop-nav" aria-label="Primary">
     <ul>
       <li><a href="index.html#combined-gallery-services">Services</a></li>
       <li><a href="work.html">Work</a></li>

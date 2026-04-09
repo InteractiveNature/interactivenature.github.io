@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Inject shared header (if placeholder exists)
     await loadSharedHeader();
 
-    // Wire up mobile navigation dropdown (header may be injected)
-    setupMobileNavDropdown();
+    // Wire up mobile navigation hamburger menu (header may be injected)
+    setupMobileNavHamburger();
 });
 
 /**
@@ -534,6 +534,61 @@ function setupMobileNavDropdown() {
         }
 
         window.location.href = value;
+    });
+}
+
+function setupMobileNavHamburger() {
+    const toggle = document.querySelector('.mobile-nav-toggle');
+    const panel = document.getElementById('mobile-nav-panel');
+
+    if (!toggle || !panel) return;
+
+    const open = () => {
+        toggle.setAttribute('aria-expanded', 'true');
+        panel.hidden = false;
+        // Next frame so transitions fire
+        requestAnimationFrame(() => panel.classList.add('is-open'));
+        document.body.style.overflow = 'hidden';
+    };
+
+    const close = () => {
+        toggle.setAttribute('aria-expanded', 'false');
+        panel.classList.remove('is-open');
+        document.body.style.overflow = '';
+
+        const onDone = (e) => {
+            if (e.target !== panel) return;
+            panel.hidden = true;
+            panel.removeEventListener('transitionend', onDone);
+        };
+        panel.addEventListener('transitionend', onDone);
+    };
+
+    const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
+
+    toggle.addEventListener('click', () => {
+        if (isOpen()) close();
+        else open();
+    });
+
+    // Close on link click
+    panel.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+            if (isOpen()) close();
+        });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+        if (!isOpen()) return;
+        if (panel.contains(e.target) || toggle.contains(e.target)) return;
+        close();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (!isOpen()) return;
+        if (e.key === 'Escape') close();
     });
 }
 

@@ -1,8 +1,15 @@
 /* Work page grid */
 
 .work-page {
-    padding-top: calc(var(--spacing-xxl)); /* account for fixed header */
+    /* account for fixed header + keep the Work title from intersecting the logo */
+    padding-top: calc(var(--spacing-xxl) + 3rem);
     padding-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 768px) {
+    .work-page {
+        padding-top: calc(var(--spacing-xxl) + 4rem);
+    }
 }
 
 .work-grid-page {
@@ -48,6 +55,15 @@
 
 .work-grid-card:hover .work-grid-card-media img {
     transform: scale(1.04);
+}
+
+/* NDA / restricted projects: blur thumbnail on hover (matches main page) */
+.work-grid-card[data-nda="true"] .work-grid-card-media img {
+    transition: filter var(--transition-normal), transform 220ms ease;
+}
+
+.work-grid-card[data-nda="true"]:hover .work-grid-card-media img {
+    filter: blur(10px);
 }
 
 .work-grid-card-title {
@@ -123,5 +139,10 @@
 @media (hover: none), (pointer: coarse) {
     .work-grid-card:hover .work-grid-card-media img {
         transform: none;
+    }
+
+    /* Touch devices: keep image readable (no hover) */
+    .work-grid-card[data-nda="true"]:hover .work-grid-card-media img {
+        filter: none;
     }
 }

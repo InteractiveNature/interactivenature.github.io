@@ -40,34 +40,7 @@
         </defs>
     </svg>
 
-    <header>
-        <div class="logo">
-            <a href="index.html">
-                <img src="assets/images/InteractiveNatureLogo.png" alt="Interactive Nature Logo" />
-            </a>
-        </div>
-
-        <!-- Mobile dropdown navigation -->
-        <div class="mobile-nav-dropdown" aria-label="Mobile navigation">
-            <label class="sr-only" for="mobile-nav-select">Navigation</label>
-            <select id="mobile-nav-select" class="mobile-nav-select">
-                <option value="">Navigate…</option>
-                <option value="index.html#combined-gallery-services">Services</option>
-                <option value="work.html">Work</option>
-                <option value="index.html#about">About</option>
-                <option value="index.html#contact">Contact</option>
-            </select>
-        </div>
-
-        <nav>
-            <ul>
-                <li><a href="index.html#combined-gallery-services">Services</a></li>
-                <li><a href="work.html">Work</a></li>
-                <li><a href="index.html#about">About</a></li>
-                <li><a href="index.html#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+    <div id="site-header"></div>
 
     <main class="work-page">
         <div class="container">
@@ -95,6 +68,7 @@
     </footer>
 
     <!-- JavaScript -->
+    <script type="module" src="js/main.js"></script>
     <script type="module" src="js/work-page.js"></script>
     <script>
         (function () {
