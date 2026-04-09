@@ -83,9 +83,13 @@ export class WorkItemManager {
             this.isAutoScrolling = true;
         }
 
-        // Initialize edge scrolling if enabled (for all devices)
-        if (this.options.edgeScrollEnabled) {
+        // Initialize edge scrolling if enabled.
+        // Disable on coarse pointers (mobile) because it can fight with touch scrolling.
+        if (this.options.edgeScrollEnabled && !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) {
             this.initializeEdgeScrolling();
+        } else {
+            // Still allow touch scrolling on mobile
+            this.initializeTouchScrolling();
         }
         
         return this;
@@ -259,6 +263,10 @@ export class WorkItemManager {
             this.autoScrollPaused = false;
         };
 
+        const isCoarsePointer = () => {
+            return window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        };
+
         // Touch start
         this.element.addEventListener('touchstart', (e) => {
             if (e.touches.length !== 1) return;
@@ -277,14 +285,15 @@ export class WorkItemManager {
         this.element.addEventListener('touchmove', (e) => {
             if (!isDragging || e.touches.length !== 1) return;
 
-            // Prevent the page itself from horizontally panning / rubber-banding
-            // so the swipe reliably scrolls the work carousel.
-            e.preventDefault();
+            // Only preventDefault on coarse pointers (phones/tablets). This avoids interfering
+            // with trackpads / desktop touchscreens and improves responsiveness on iOS.
+            if (isCoarsePointer()) e.preventDefault();
 
             const x = e.touches[0].pageX;
 
-            // Natural 1:1 scroll (avoid the 1.2 multiplier which makes it feel "slippery")
-            const distance = (startX - x);
+            // Slightly amplify movement on mobile to avoid the "slow" feel.
+            const multiplier = isCoarsePointer() ? 1.35 : 1;
+            const distance = (startX - x) * multiplier;
 
             const now = Date.now();
             const elapsed = now - lastTimestamp;
