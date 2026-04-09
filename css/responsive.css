@@ -177,8 +177,8 @@
     scroll-padding-left: 1rem;
     scroll-padding-right: 1rem;
 
-    /* Ensure horizontal swipe gestures are captured by the carousel */
-    touch-action: pan-y;
+    /* Allow horizontal swipe scrolling (fixes "stuck" feel on mobile) */
+    touch-action: pan-x;
 }
     
 /* Restore section header margin on mobile */
